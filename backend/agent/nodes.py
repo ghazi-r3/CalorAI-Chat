@@ -23,7 +23,6 @@ from backend.agent.prompts import SYSTEM_PROMPT, MEMORY_EXTRACTION_PROMPT
 from backend.agent.tools import ALL_TOOLS
 from backend.db.database import get_db
 from backend.db.memory import (
-    get_memory_by_category,
     get_all_memory,
     upsert_memory,
     save_message,
