@@ -187,7 +187,7 @@ def agent_node(state: AgentState) -> dict:
 
     # Create the LLM with tools bound
     llm = ChatGoogleGenerativeAI(
-        model="gemini-3.6-flash",
+        model="gemini-3.1-flash-lite",
         temperature=0.3,
         max_output_tokens=2048,
     )
@@ -238,7 +238,7 @@ def post_process(state: AgentState) -> dict:
         )
 
         llm = ChatGoogleGenerativeAI(
-            model="gemini-3.6-flash",
+            model="gemini-3.1-flash-lite",
             temperature=0.1,
             max_output_tokens=512,
         )

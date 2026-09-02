@@ -74,7 +74,7 @@ def extract_food_from_image(image_path: str) -> VisionResult:
     start_time = time.time()
 
     response = client.models.generate_content(
-        model="gemini-3.6-flash",
+        model="gemini-3.1-flash-lite",
         contents=[
             VISION_PROMPT,
             types.Part.from_bytes(
