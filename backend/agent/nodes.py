@@ -17,7 +17,6 @@ from datetime import date
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
-import google.generativeai as genai
 
 from backend.agent.state import AgentState
 from backend.agent.prompts import SYSTEM_PROMPT, MEMORY_EXTRACTION_PROMPT

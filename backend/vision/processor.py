@@ -23,14 +23,15 @@ import time
 import base64
 from pathlib import Path
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 from backend.agent.prompts import VISION_PROMPT
 from backend.models.schemas import VisionResult, MealItem
 
 load_dotenv()
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 
 def extract_food_from_image(image_path: str) -> VisionResult:
@@ -70,19 +71,18 @@ def extract_food_from_image(image_path: str) -> VisionResult:
     mime_type = mime_types.get(suffix, "image/jpeg")
 
     # Use Gemini Flash for vision (fast, multimodal-capable)
-    model = genai.GenerativeModel("gemini-2.0-flash")
-
     start_time = time.time()
 
-    response = model.generate_content(
-        [
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=[
             VISION_PROMPT,
-            {
-                "mime_type": mime_type,
-                "data": image_data,
-            },
+            types.Part.from_bytes(
+                data=image_data,
+                mime_type=mime_type,
+            ),
         ],
-        generation_config=genai.GenerationConfig(
+        config=types.GenerateContentConfig(
             temperature=0.2,  # Low temperature for structured extraction
             max_output_tokens=1024,
         ),
