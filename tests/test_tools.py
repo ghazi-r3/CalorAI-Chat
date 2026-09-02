@@ -21,8 +21,9 @@ from backend.db.meals import (
     get_meal_by_id, get_meals, get_daily_totals,
 )
 from backend.db.memory import (
-    upsert_memory, get_all_memory, get_memory_by_category,
-    get_memory_by_key, delete_memory, save_message, get_conversation_history,
+    upsert_memory, get_all_memory, get_memory_by_key,
+    delete_memory, save_message, get_conversation_history,
+    get_relevant_memories, generate_embedding
 )
 
 
@@ -212,19 +213,26 @@ class TestMemoryPersistence:
             all_mem = get_all_memory(conn, USER_ID)
             assert len(all_mem) == 1  # Only one entry
 
-    def test_category_filtering(self):
-        with get_db("test_calorai.db") as conn:
-            upsert_memory(conn, USER_ID, "diet", "vegetarian", "preference")
-            upsert_memory(conn, USER_ID, "usual_breakfast", "2 parathas and chai", "shortcut")
-            upsert_memory(conn, USER_ID, "protein_target", "140g", "target")
+    def test_semantic_search(self):
+        from unittest.mock import patch
+        
+        # Mock embeddings to just return simple vectors based on the text length 
+        # so they pass the cosine similarity threshold.
+        def mock_generate_embedding(text):
+            return [1.0, 0.0, 0.0] if "breakfast" in text or "paratha" in text else [0.0, 1.0, 0.0]
 
-            # Load only preferences and targets (the "always-load" categories)
-            prefs = get_memory_by_category(conn, USER_ID, ["preference", "target"])
-            assert len(prefs) == 2
-            keys = {m["key"] for m in prefs}
-            assert "diet" in keys
-            assert "protein_target" in keys
-            assert "usual_breakfast" not in keys
+        with patch("backend.db.memory.generate_embedding", side_effect=mock_generate_embedding):
+            with get_db("test_calorai.db") as conn:
+                # Need embeddings for these for semantic search to find them
+                upsert_memory(conn, USER_ID, "diet", "vegetarian", "preference", embedding=mock_generate_embedding("diet: vegetarian"))
+                upsert_memory(conn, USER_ID, "usual_breakfast", "2 parathas and chai", "shortcut", embedding=mock_generate_embedding("usual_breakfast: 2 parathas and chai"))
+                upsert_memory(conn, USER_ID, "protein_target", "140g", "target", embedding=mock_generate_embedding("protein_target: 140g"))
+
+                # Test semantic search for breakfast
+                results = get_relevant_memories(conn, USER_ID, "what do i usually have for breakfast?")
+                
+                assert len(results) > 0
+                assert any(r["value"] == "2 parathas and chai" for r in results)
 
     def test_delete_memory(self):
         with get_db("test_calorai.db") as conn:

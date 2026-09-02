@@ -31,7 +31,7 @@ from backend.db.meals import (
 from backend.db.memory import (
     upsert_memory,
     get_all_memory,
-    get_memory_by_category,
+    generate_embedding,
 )
 from backend.models.nutrition import lookup_nutrition as db_lookup_nutrition
 
@@ -376,9 +376,15 @@ def set_user_memory(key: str, value: str, category: str) -> str:
         return f"❌ Invalid category '{category}'. Must be one of: {valid_categories}"
 
     with get_db() as conn:
-        upsert_memory(conn, DEFAULT_USER_ID, key, value, category)
+        fact_text = f"{key}: {value}"
+        try:
+            emb = generate_embedding(fact_text)
+        except Exception:
+            emb = None
+            
+        upsert_memory(conn, DEFAULT_USER_ID, key, value, category, embedding=emb)
 
-    return f"💾 Remembered: [{category}] {key} = {value}"
+    return f"✅ Remembered: [{category}] {key} = {value}"
 
 
 # Export all tools for the agent
