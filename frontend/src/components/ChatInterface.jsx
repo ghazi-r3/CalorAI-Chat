@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
 
 const API_BASE = 'http://localhost:8000'
 
@@ -136,7 +137,17 @@ export default function ChatInterface() {
                 style={{ maxWidth: '200px', borderRadius: '8px', marginBottom: '8px' }}
               />
             )}
-            <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
+            <div style={{ whiteSpace: 'pre-wrap' }}>
+              <ReactMarkdown
+                components={{
+                  p: ({node, ...props}) => <p style={{ margin: '0 0 8px 0' }} {...props} />,
+                  ul: ({node, ...props}) => <ul style={{ margin: '0 0 8px 0', paddingLeft: '20px' }} {...props} />,
+                  li: ({node, ...props}) => <li style={{ margin: '4px 0' }} {...props} />
+                }}
+              >
+                {msg.content}
+              </ReactMarkdown>
+            </div>
             <div
               style={{
                 fontSize: '0.7rem',
