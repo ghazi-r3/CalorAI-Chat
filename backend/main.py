@@ -119,7 +119,13 @@ async def chat(
     response_text = ""
     for msg in reversed(result.get("messages", [])):
         if isinstance(msg, AIMessage) and not msg.tool_calls:
-            response_text = msg.content
+            content = msg.content
+            if isinstance(content, list):
+                response_text = " ".join(
+                    [part.get("text", "") for part in content if isinstance(part, dict)]
+                )
+            else:
+                response_text = content
             break
 
     if not response_text:
@@ -172,11 +178,17 @@ async def chat_text(request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Agent error: {str(e)}")
 
-    # Extract response
+    # Extract the final response
     response_text = ""
     for msg in reversed(result.get("messages", [])):
         if isinstance(msg, AIMessage) and not msg.tool_calls:
-            response_text = msg.content
+            content = msg.content
+            if isinstance(content, list):
+                response_text = " ".join(
+                    [part.get("text", "") for part in content if isinstance(part, dict)]
+                )
+            else:
+                response_text = content
             break
 
     if not response_text:

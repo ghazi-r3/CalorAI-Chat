@@ -187,7 +187,7 @@ def agent_node(state: AgentState) -> dict:
 
     # Create the LLM with tools bound
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-3.6-flash",
         temperature=0.3,
         max_output_tokens=2048,
     )
@@ -217,7 +217,11 @@ def post_process(state: AgentState) -> dict:
     last_assistant_msg = ""
     for msg in reversed(messages):
         if isinstance(msg, AIMessage) and not last_assistant_msg and not msg.tool_calls:
-            last_assistant_msg = msg.content
+            content = msg.content
+            if isinstance(content, list):
+                last_assistant_msg = " ".join([p.get("text", "") for p in content if isinstance(p, dict)])
+            else:
+                last_assistant_msg = content
         elif isinstance(msg, HumanMessage) and not last_user_msg:
             last_user_msg = msg.content
         if last_user_msg and last_assistant_msg:
@@ -234,7 +238,7 @@ def post_process(state: AgentState) -> dict:
         )
 
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             temperature=0.1,
             max_output_tokens=512,
         )
