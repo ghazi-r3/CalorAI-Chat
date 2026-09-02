@@ -52,6 +52,7 @@ def log_meal(
     meal_type: str = "other",
     source: str = "text",
     fiber_g: float = 0,
+    date: str = "",
 ) -> str:
     """Log a new meal to the database. Use when the user reports eating something.
 
@@ -65,6 +66,7 @@ def log_meal(
         meal_type: One of "breakfast", "lunch", "dinner", "snack", or "other"
         source: How the meal was reported - "text", "image", or "image+text"
         fiber_g: Total fiber in grams (optional)
+        date: The date the meal was consumed in YYYY-MM-DD format (e.g., '2023-10-25'). Use if user specifies 'yesterday' or a past date.
 
     Returns:
         Confirmation with meal ID and nutrition summary
@@ -88,6 +90,7 @@ def log_meal(
             meal_type=meal_type,
             source=source,
             raw_input=None,
+            target_date=date if date else None,
         )
 
         # Get updated daily totals
@@ -117,15 +120,16 @@ def update_meal(
     """Update an existing meal for corrections. Use when the user says things like "actually that was 3 rotis not 2".
 
     IMPORTANT: Use get_meals first to find the meal_id of the meal to update.
-    Only provide the fields that need to change — unchanged fields should be left at their defaults.
+    CRITICAL: The database does NOT automatically recalculate calories and macros. You MUST manually recalculate the total calories, protein_g, carbs_g, and fat_g for the corrected meal and provide them here.
+    Only provide the fields that need to change — unchanged fields should be left at their defaults (-1 or "").
 
     Args:
         meal_id: The ID of the meal to update (get this from get_meals)
         description: Updated description (leave empty to keep current)
-        calories: Updated calories (-1 to keep current)
-        protein_g: Updated protein (-1 to keep current)
-        carbs_g: Updated carbs (-1 to keep current)
-        fat_g: Updated fat (-1 to keep current)
+        calories: MUST BE PROVIDED if quantity changed. Updated calories (-1 to keep current)
+        protein_g: MUST BE PROVIDED if quantity changed. Updated protein (-1 to keep current)
+        carbs_g: MUST BE PROVIDED if quantity changed. Updated carbs (-1 to keep current)
+        fat_g: MUST BE PROVIDED if quantity changed. Updated fat (-1 to keep current)
         items: Updated items JSON array (leave empty to keep current)
         fiber_g: Updated fiber (-1 to keep current)
 

@@ -23,20 +23,24 @@ def create_meal(
     source: str = "text",
     raw_input: str | None = None,
     image_path: str | None = None,
+    target_date: str | None = None,
 ) -> int:
     """Insert a new meal and return its ID."""
+    
+    timestamp = f"{target_date} 12:00:00" if target_date else datetime.now().isoformat()
+    
     cursor = conn.execute(
         """
         INSERT INTO meals (
             user_id, meal_type, description, items,
             calories, protein_g, carbs_g, fat_g, fiber_g,
-            source, raw_input, image_path
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            source, raw_input, image_path, timestamp
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             user_id, meal_type, description, json.dumps(items),
             calories, protein_g, carbs_g, fat_g, fiber_g,
-            source, raw_input, image_path,
+            source, raw_input, image_path, timestamp,
         ),
     )
     conn.commit()
