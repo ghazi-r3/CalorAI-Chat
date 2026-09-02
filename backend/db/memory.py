@@ -128,9 +128,9 @@ def get_conversation_history(
         """
         SELECT role, content, timestamp FROM conversations
         WHERE user_id = ? AND session_id = ?
-        ORDER BY timestamp DESC LIMIT ?
+        ORDER BY id DESC LIMIT ?
         """,
         (user_id, session_id, limit),
     ).fetchall()
-    # Reverse to get chronological order
+    # Reverse to get chronological order (we fetched DESC for LIMIT)
     return [dict(r) for r in reversed(rows)]
