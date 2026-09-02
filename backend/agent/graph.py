@@ -20,7 +20,7 @@ from langgraph.prebuilt import ToolNode
 from langchain_core.messages import AIMessage
 
 from backend.agent.state import AgentState
-from backend.agent.nodes import preprocess, load_context, agent_node, post_process
+from backend.agent.nodes import preprocess, load_context, agent_node
 from backend.agent.tools import ALL_TOOLS
 
 
@@ -42,9 +42,8 @@ def should_continue(state: AgentState) -> str:
     if isinstance(last_message, AIMessage) and last_message.tool_calls:
         return "tools"
 
-    # Otherwise, the agent is done — go to post-processing
-    return "post_process"
-
+    # Otherwise, the agent is done
+    return END
 
 def create_graph():
     """
@@ -69,28 +68,24 @@ def create_graph():
     graph.add_node("load_context", load_context)
     graph.add_node("agent", agent_node)
     graph.add_node("tools", tool_node)
-    graph.add_node("post_process", post_process)
 
     # Define edges
     graph.set_entry_point("preprocess")
     graph.add_edge("preprocess", "load_context")
     graph.add_edge("load_context", "agent")
 
-    # Conditional: agent → tools (if tool calls) or → post_process (if done)
+    # Conditional: agent → tools (if tool calls) or → END (if done)
     graph.add_conditional_edges(
         "agent",
         should_continue,
         {
             "tools": "tools",
-            "post_process": "post_process",
+            END: END,
         },
     )
 
     # After tool execution, go back to agent for continued reasoning
     graph.add_edge("tools", "agent")
-
-    # Post-process leads to end
-    graph.add_edge("post_process", END)
 
     # Compile
     compiled = graph.compile()

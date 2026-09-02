@@ -17,7 +17,7 @@ import shutil
 from pathlib import Path
 from datetime import date
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.messages import HumanMessage, AIMessage
 from dotenv import load_dotenv
@@ -26,6 +26,7 @@ from backend.db.database import init_db, get_db
 from backend.db.meals import get_meals as db_get_meals, get_daily_totals as db_get_daily_totals
 from backend.db.memory import get_all_memory, get_conversation_history
 from backend.agent.graph import agent_graph
+from backend.agent.nodes import background_post_process
 from backend.models.schemas import ChatRequest, ChatResponse
 from backend.middleware.latency import LatencyMiddleware, latency_tracker
 
@@ -59,6 +60,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(
+    background_tasks: BackgroundTasks,
     message: str = Form(...),
     image: UploadFile | None = File(None),
     user_id: str = Form("default"),
@@ -69,7 +71,7 @@ async def chat(
 
     The image is saved to disk and its path is passed to the agent graph.
     The graph handles vision extraction, context loading, agent reasoning,
-    tool execution, and memory extraction.
+    and tool execution. Memory extraction runs in a background task.
     """
     start_time = time.time()
 
@@ -98,6 +100,7 @@ async def chat(
             elif h["role"] == "assistant":
                 history_messages.append(AIMessage(content=h["content"]))
 
+    last_user_msg_text = message
     # Build input state
     input_state = {
         "messages": history_messages + [HumanMessage(content=message)],
@@ -131,6 +134,15 @@ async def chat(
     if not response_text:
         response_text = "I'm sorry, I couldn't process that. Could you try again?"
 
+    # Add background task for memory extraction and history save
+    background_tasks.add_task(
+        background_post_process,
+        user_id,
+        session_id,
+        last_user_msg_text,
+        response_text,
+    )
+
     # Calculate latency
     latency_ms = (time.time() - start_time) * 1000
     has_image = image_path is not None
@@ -143,7 +155,7 @@ async def chat(
 
 
 @app.post("/chat/text", response_model=ChatResponse)
-async def chat_text(request: ChatRequest):
+async def chat_text(request: ChatRequest, background_tasks: BackgroundTasks):
     """
     Text-only chat endpoint (simpler JSON body, no file upload).
     Useful for testing and programmatic access.
@@ -162,6 +174,7 @@ async def chat_text(request: ChatRequest):
             elif h["role"] == "assistant":
                 history_messages.append(AIMessage(content=h["content"]))
 
+    last_user_msg_text = request.message
     # Build input state
     input_state = {
         "messages": history_messages + [HumanMessage(content=request.message)],
@@ -193,6 +206,15 @@ async def chat_text(request: ChatRequest):
 
     if not response_text:
         response_text = "I'm sorry, I couldn't process that. Could you try again?"
+
+    # Add background task for memory extraction and history save
+    background_tasks.add_task(
+        background_post_process,
+        request.user_id,
+        session_id,
+        last_user_msg_text,
+        response_text,
+    )
 
     latency_ms = (time.time() - start_time) * 1000
     has_image = request.image_path is not None

@@ -199,36 +199,18 @@ def agent_node(state: AgentState) -> dict:
     return {"messages": [response]}
 
 
-def post_process(state: AgentState) -> dict:
+def background_post_process(user_id: str, session_id: str, last_user_msg: str, last_assistant_msg: str):
     """
     Post-process after the agent responds.
+    Runs asynchronously as a FastAPI BackgroundTask.
 
     THIS IS THE MEMORY WRITE PATH — where we decide what facts to persist.
 
     1. Extract any facts worth remembering from the conversation turn
     2. Save conversation history for multi-turn context
     """
-    user_id = state.get("user_id", "default")
-    session_id = state.get("session_id", "default")
-    messages = state.get("messages", [])
-
-    # Find the last user message and last assistant message
-    last_user_msg = ""
-    last_assistant_msg = ""
-    for msg in reversed(messages):
-        if isinstance(msg, AIMessage) and not last_assistant_msg and not msg.tool_calls:
-            content = msg.content
-            if isinstance(content, list):
-                last_assistant_msg = " ".join([p.get("text", "") for p in content if isinstance(p, dict)])
-            else:
-                last_assistant_msg = content
-        elif isinstance(msg, HumanMessage) and not last_user_msg:
-            last_user_msg = msg.content
-        if last_user_msg and last_assistant_msg:
-            break
-
     if not last_user_msg or not last_assistant_msg:
-        return {}
+        return
 
     # ── Memory extraction (LLM-driven) ──────────────────────────────────
     try:
@@ -275,5 +257,3 @@ def post_process(state: AgentState) -> dict:
             save_message(conn, user_id, session_id, "assistant", last_assistant_msg)
     except Exception:
         pass
-
-    return {}
