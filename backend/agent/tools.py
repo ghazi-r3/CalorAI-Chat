@@ -120,17 +120,17 @@ def update_meal(
     """Update an existing meal for corrections. Use when the user says things like "actually that was 3 rotis not 2".
 
     IMPORTANT: Use get_meals first to find the meal_id of the meal to update.
-    CRITICAL: The database does NOT automatically recalculate calories and macros. You MUST manually recalculate the total calories, protein_g, carbs_g, and fat_g for the corrected meal and provide them here.
+    CRITICAL: The database does NOT automatically recalculate calories and macros, NOR does it rewrite the description. You MUST manually recalculate the total calories, protein_g, carbs_g, and fat_g. You MUST ALSO provide an updated `description` and `items` JSON that accurately reflect the new quantities (e.g., if changing from 2 to 3 rotis, the description must be updated to say "3 rotis").
     Only provide the fields that need to change — unchanged fields should be left at their defaults (-1 or "").
 
     Args:
         meal_id: The ID of the meal to update (get this from get_meals)
-        description: Updated description (leave empty to keep current)
+        description: MUST BE PROVIDED if quantity/items changed to reflect the new truth. Updated description (leave empty to keep current)
         calories: MUST BE PROVIDED if quantity changed. Updated calories (-1 to keep current)
         protein_g: MUST BE PROVIDED if quantity changed. Updated protein (-1 to keep current)
         carbs_g: MUST BE PROVIDED if quantity changed. Updated carbs (-1 to keep current)
         fat_g: MUST BE PROVIDED if quantity changed. Updated fat (-1 to keep current)
-        items: Updated items JSON array (leave empty to keep current)
+        items: MUST BE PROVIDED if quantity changed. Updated items JSON array (leave empty to keep current)
         fiber_g: Updated fiber (-1 to keep current)
 
     Returns:
