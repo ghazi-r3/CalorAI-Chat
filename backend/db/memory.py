@@ -102,24 +102,6 @@ def get_relevant_memories(conn, user_id: str, user_query: str, top_k: int = 5, t
     scored.sort(key=lambda x: x[0], reverse=True)
     return [item[1] for item in scored[:top_k]]
 
-    categories: list[str],
-) -> list[dict]:
-    """
-    Retrieve memory entries filtered by category.
-
-    This is the RETRIEVE PATH for memory — called from load_context to
-    selectively pull relevant memory into the agent's context.
-
-    Always-load categories: "preference", "target"
-    Conditionally-loaded:   "shortcut" (when user references "my usual" etc.)
-    """
-    placeholders = ",".join("?" for _ in categories)
-    rows = conn.execute(
-        f"SELECT key, value, category, confidence FROM memory WHERE user_id = ? AND category IN ({placeholders}) ORDER BY category, key",
-        [user_id] + categories,
-    ).fetchall()
-    return [dict(r) for r in rows]
-
 
 def get_memory_by_key(conn, user_id: str, key: str) -> dict | None:
     """Retrieve a specific memory entry by key."""
