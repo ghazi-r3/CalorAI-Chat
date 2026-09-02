@@ -124,23 +124,10 @@ def load_context(state: AgentState) -> dict:
             last_user_msg = msg.content.lower()
             break
 
-    reference_patterns = [
-        "my usual", "same as", "like yesterday", "like last",
-        "the usual", "what i had", "what i ate", "again",
-    ]
-    if any(p in last_user_msg for p in reference_patterns):
-        categories.append("shortcut")
-
-    # Also load shortcuts if user says "my" + food reference
-    if "my " in last_user_msg:
-        categories.append("shortcut")
-
-    # Deduplicate
-    categories = list(set(categories))
-
-    # Load memory
+    # Load relevant memory using semantic search
     with get_db() as conn:
-        memories = get_memory_by_category(conn, user_id, categories)
+        from backend.db.memory import get_relevant_memories
+        memories = get_relevant_memories(conn, user_id, last_user_msg, top_k=4, threshold=0.5)
 
     # Format memory context
     if memories:
@@ -237,14 +224,23 @@ def background_post_process(user_id: str, session_id: str, last_user_msg: str, l
 
         if extracted and isinstance(extracted, list):
             with get_db() as conn:
+                from backend.db.memory import generate_embedding
                 for entry in extracted:
                     if all(k in entry for k in ("key", "value", "category")):
+                        # Generate embedding for semantic search
+                        fact_text = f"{entry['key']}: {entry['value']}"
+                        try:
+                            emb = generate_embedding(fact_text)
+                        except Exception:
+                            emb = None
+                            
                         upsert_memory(
                             conn,
                             user_id,
                             entry["key"],
                             entry["value"],
                             entry["category"],
+                            embedding=emb,
                         )
     except (json.JSONDecodeError, Exception):
         # Memory extraction is best-effort — don't break the response

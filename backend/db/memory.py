@@ -13,9 +13,29 @@ within a session, but is never called "memory."
 """
 
 from datetime import datetime
-
+import json
+import math
+import os
+from google import genai
 
 # ── Persistent Memory ────────────────────────────────────────────────────────
+
+def generate_embedding(text: str) -> list[float]:
+    """Generate embedding using Gemini API."""
+    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+    resp = client.models.embed_content(
+        model="text-embedding-004", 
+        contents=text
+    )
+    return resp.embeddings[0].values
+
+def cosine_similarity(v1: list[float], v2: list[float]) -> float:
+    dot = sum(a * b for a, b in zip(v1, v2))
+    norm1 = sum(a * a for a in v1) ** 0.5
+    norm2 = sum(b * b for b in v2) ** 0.5
+    if norm1 == 0 or norm2 == 0: return 0
+    return dot / (norm1 * norm2)
+
 
 def upsert_memory(
     conn,
@@ -24,6 +44,7 @@ def upsert_memory(
     value: str,
     category: str,
     confidence: float = 1.0,
+    embedding: list[float] | None = None,
 ) -> None:
     """
     Insert or update a memory fact (upsert on user_id + key).
@@ -31,17 +52,19 @@ def upsert_memory(
     This is the WRITE PATH for memory — called from the extract_memory step
     when the LLM identifies a fact worth persisting.
     """
+    emb_str = json.dumps(embedding) if embedding else None
     conn.execute(
         """
-        INSERT INTO memory (user_id, key, value, category, confidence, updated_at)
-        VALUES (?, ?, ?, ?, ?, datetime('now'))
+        INSERT INTO memory (user_id, key, value, category, confidence, embedding, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
         ON CONFLICT(user_id, key) DO UPDATE SET
             value = excluded.value,
             category = excluded.category,
             confidence = excluded.confidence,
+            embedding = excluded.embedding,
             updated_at = datetime('now')
         """,
-        (user_id, key, value, category, confidence),
+        (user_id, key, value, category, confidence, emb_str),
     )
     conn.commit()
 
@@ -55,9 +78,30 @@ def get_all_memory(conn, user_id: str) -> list[dict]:
     return [dict(r) for r in rows]
 
 
-def get_memory_by_category(
-    conn,
-    user_id: str,
+def get_relevant_memories(conn, user_id: str, user_query: str, top_k: int = 5, threshold: float = 0.5) -> list[dict]:
+    """
+    Semantic search for memories. Replaces exact category matching.
+    """
+    try:
+        query_emb = generate_embedding(user_query)
+    except Exception:
+        return []
+
+    rows = conn.execute(
+        "SELECT key, value, category, embedding FROM memory WHERE user_id = ? AND embedding IS NOT NULL",
+        (user_id,)
+    ).fetchall()
+
+    scored = []
+    for r in rows:
+        emb = json.loads(r["embedding"])
+        sim = cosine_similarity(query_emb, emb)
+        if sim >= threshold:
+            scored.append((sim, dict(r)))
+            
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [item[1] for item in scored[:top_k]]
+
     categories: list[str],
 ) -> list[dict]:
     """

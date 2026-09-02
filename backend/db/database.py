@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS memory (
     key         TEXT NOT NULL,
     value       TEXT NOT NULL,
     category    TEXT NOT NULL,
+    embedding   TEXT,
     confidence  REAL NOT NULL DEFAULT 1.0,
     created_at  DATETIME NOT NULL DEFAULT (datetime('now')),
     updated_at  DATETIME NOT NULL DEFAULT (datetime('now')),
