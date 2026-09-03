@@ -282,6 +282,9 @@ As requested in the task brief, here are public LangSmith traces demonstrating t
 - [**Recalling Past Memory**](https://smith.langchain.com/public/14ad6d07-44cd-4c78-9a8f-020d43e5bafc/r/01a0661f-a966-7933-b583-2e4e77b14f02?start_time=2026-09-03T07%3A15%3A46.14933Z): Shows the agent retrieving context from a previous session before executing its task.
 - [**Multimodal Logging (Photo)**](https://smith.langchain.com/public/ed2110d3-b8ae-4fbe-823f-1a508a46bfd5/r/01a06620-b524-76e2-98e0-99aad7472573?start_time=2026-09-03T07%3A16%3A54.69193Z): Illustrates the vision pipeline extracting structured food data from an image and passing it to the text model.
 
+
+<img width="2392" height="1446" alt="image" src="https://github.com/user-attachments/assets/c2145d84-8c40-42f3-a480-b380d3468490" />
+
 ---
 
 ## What I'd Fix or Build Next
