@@ -40,3 +40,7 @@ docs/
 .pytest_cache/
 htmlcov/
 .coverage
+
+# Uploads
+uploads/
+

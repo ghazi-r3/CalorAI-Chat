@@ -271,6 +271,19 @@ In the final hours of the assignment, I knocked out several advanced "nice-to-ha
 5. **LangSmith Tracing**: Wired up `.env.example` support for instant LangSmith graph tracing.
 6. **UX Markdown Rendering**: Added `react-markdown` to the frontend so the agent's macro breakdowns display cleanly structured instead of raw asterisks.
 
+---
+
+## LangSmith Tracing
+
+As requested in the task brief, here are public LangSmith traces demonstrating the agent's thought process, state graph traversal, and tool executions across different scenarios:
+
+- [**Basic Logging (Add Meals)**](https://smith.langchain.com/public/87e028b4-b9ae-4ba7-ab48-d1a134e70d54/r/01a0661c-a70b-7ff0-a305-9ad6fb7061c3?start_time=2026-09-03T07%3A12%3A28.939625Z): Shows the agent processing a text request and calling tools to log a meal.
+- [**Setting Memory**](https://smith.langchain.com/public/66f54d6d-bfb9-4bb0-b38d-664f68d15508/r/01a0661e-d403-7a71-be02-8693715e0c76?start_time=2026-09-03T07%3A14%3A51.523205Z): Demonstrates the background extraction process saving user facts into semantic memory.
+- [**Recalling Past Memory**](https://smith.langchain.com/public/14ad6d07-44cd-4c78-9a8f-020d43e5bafc/r/01a0661f-a966-7933-b583-2e4e77b14f02?start_time=2026-09-03T07%3A15%3A46.14933Z): Shows the agent retrieving context from a previous session before executing its task.
+- [**Multimodal Logging (Photo)**](https://smith.langchain.com/public/ed2110d3-b8ae-4fbe-823f-1a508a46bfd5/r/01a06620-b524-76e2-98e0-99aad7472573?start_time=2026-09-03T07%3A16%3A54.69193Z): Illustrates the vision pipeline extracting structured food data from an image and passing it to the text model.
+
+---
+
 ## What I'd Fix or Build Next
 
 With more time, in priority order:
