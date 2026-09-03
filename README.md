@@ -207,8 +207,8 @@ In the [`load_context`](backend/agent/nodes.py) node, BEFORE the agent reasons:
 
 | Path | p50 | p95 | Notes |
 |------|-----|-----|-------|
-| Text only | ~2-4s | ~5-8s | Single LLM call + tool execution |
-| With image | ~4-7s | ~8-12s | Vision call + text agent call (serial) |
+| Text only | ~3-6s | ~8-12s | Single LLM call + tool execution |
+| With image | ~5-10s | ~10-15s | Vision call + text agent call (serial) |
 
 > **Important**: These numbers depend heavily on Gemini API latency, which varies by time of day and load. Run `GET /metrics` after several requests to see your actual numbers.
 
@@ -276,6 +276,9 @@ In the final hours of the assignment, I knocked out several advanced "nice-to-ha
 ## LangSmith Tracing
 
 As requested in the task brief, here are public LangSmith traces demonstrating the agent's thought process, state graph traversal, and tool executions across different scenarios:
+
+<img width="2022" height="222" alt="image" src="https://github.com/user-attachments/assets/c2fa9dea-ec01-4202-8629-d0dd73efc925" />
+
 
 - [**Basic Logging (Add Meals)**](https://smith.langchain.com/public/87e028b4-b9ae-4ba7-ab48-d1a134e70d54/r/01a0661c-a70b-7ff0-a305-9ad6fb7061c3?start_time=2026-09-03T07%3A12%3A28.939625Z): Shows the agent processing a text request and calling tools to log a meal.
 - [**Setting Memory**](https://smith.langchain.com/public/66f54d6d-bfb9-4bb0-b38d-664f68d15508/r/01a0661e-d403-7a71-be02-8693715e0c76?start_time=2026-09-03T07%3A14%3A51.523205Z): Demonstrates the background extraction process saving user facts into semantic memory.
